@@ -283,10 +283,10 @@ func main() {
 
 	// ====== API KATEGORI ======
 
-	// DELETE localhost:8080/api/kategori/{id}
-	// PUT localhost:8080/api/kategori/{id}
-	// GET localhost:8080/api/kategori/{id}
-	http.HandleFunc("/api/kategori/", func(w http.ResponseWriter, r *http.Request) {
+	// DELETE localhost:8080/api/categories/{id}
+	// PUT localhost:8080/api/categories/{id}
+	// GET localhost:8080/api/categories/{id}
+	http.HandleFunc("/api/categories/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set(contentTypeHeader, jsonContentType)
 
 		switch r.Method {
@@ -302,9 +302,9 @@ func main() {
 	})
 				
 
-	// POST localhost:8080/api/kategori
-	// GET localhost:8080/api/kategori
-	http.HandleFunc("/api/kategori", func(w http.ResponseWriter, r *http.Request) {
+	// POST localhost:8080/api/categories
+	// GET localhost:8080/api/categories
+	http.HandleFunc("/api/categories", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set(contentTypeHeader, jsonContentType)
 
 		switch r.Method {
