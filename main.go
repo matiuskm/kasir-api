@@ -181,7 +181,7 @@ func createCategory(w http.ResponseWriter, r *http.Request) {
 
 func getCategoryByID(w http.ResponseWriter, r *http.Request) {
 	// ambil id dari url
-	idStr := strings.TrimPrefix(r.URL.Path, "/api/kategori/")
+	idStr := strings.TrimPrefix(r.URL.Path, "/api/categories/")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -208,7 +208,7 @@ func getCategoryByID(w http.ResponseWriter, r *http.Request) {
 
 func updateCategoryByID(w http.ResponseWriter, r *http.Request) {
 	// ambil id dari url
-	idStr := strings.TrimPrefix(r.URL.Path, "/api/kategori/")
+	idStr := strings.TrimPrefix(r.URL.Path, "/api/categories/")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -251,7 +251,7 @@ func updateCategoryByID(w http.ResponseWriter, r *http.Request) {
 
 func deleteCategoryByID(w http.ResponseWriter, r *http.Request) {
 	// ambil id dari url
-	idStr := strings.TrimPrefix(r.URL.Path, "/api/kategori/")
+	idStr := strings.TrimPrefix(r.URL.Path, "/api/categories/")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
