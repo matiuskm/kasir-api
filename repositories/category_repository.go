@@ -13,8 +13,13 @@ func NewCategoryRepository(db *sql.DB) *CategoryRepository {
 	return &CategoryRepository{db: db}
 }
 
-func (r *CategoryRepository) GetAllCategories() ([]models.Category, error) {
-	rows, err := r.db.Query("SELECT id, name, description FROM categories ORDER BY id ASC")
+func (r *CategoryRepository) GetAllCategories(page, limit int) ([]models.Category, error) {
+	offset := (page - 1) * limit
+	rows, err := r.db.Query(
+		"SELECT id, name, description FROM categories ORDER BY id ASC LIMIT $1 OFFSET $2",
+		limit,
+		offset,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -91,4 +96,10 @@ func (r *CategoryRepository) UpdateCategory(category *models.Category) error {
 func (r *CategoryRepository) DeleteCategory(id int) error {
 	_, err := r.db.Exec("DELETE FROM categories WHERE id = $1", id)
 	return err
+}
+
+func (r *CategoryRepository) CountCategories() (int, error) {
+	var total int
+	err := r.db.QueryRow("SELECT COUNT(*) FROM categories").Scan(&total)
+	return total, err
 }

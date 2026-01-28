@@ -13,8 +13,8 @@ func NewCategoryService(repo *repositories.CategoryRepository) *CategoryService 
 	return &CategoryService{repo: repo}
 }
 
-func (s *CategoryService) GetAllCategories() ([]models.Category, error) {
-	return s.repo.GetAllCategories()
+func (s *CategoryService) GetAllCategories(page, limit int) ([]models.Category, error) {
+	return s.repo.GetAllCategories(page, limit)
 }
 
 func (s *CategoryService) CreateCategory(category *models.Category) error {
@@ -35,4 +35,8 @@ func (s *CategoryService) UpdateCategory(category *models.Category) error {
 
 func (s *CategoryService) DeleteCategory(id int) error {
 	return s.repo.DeleteCategory(id)
+}
+
+func (s *CategoryService) CountCategories() (int, error) {
+	return s.repo.CountCategories()
 }

@@ -22,15 +22,36 @@ func NewProductHandler(service *services.ProductService) *ProductHandler {
 	return &ProductHandler{service: service}
 }
 
-func (h *ProductHandler) getAllProducts(w http.ResponseWriter, _ *http.Request) {
+func (h *ProductHandler) getAllProducts(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set(contentTypeHeader, jsonContentType)
-	products, err := h.service.GetAllProducts()
+	page, limit, ok := parsePagination(r)
+	if !ok {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Invalid pagination params"})
+		return
+	}
+	total, err := h.service.CountProducts()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Failed to count products"})
+		return
+	}
+	products, err := h.service.GetAllProducts(page, limit)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Failed to retrieve products"})
 		return
 	}
-	_ = json.NewEncoder(w).Encode(products)
+	meta := PaginationMeta{
+		Total:    total,
+		Page:     page,
+		PageSize: limit,
+		HasMore:  page*limit < total,
+	}
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"data": products,
+		"meta": meta,
+	})
 }
 
 func (h *ProductHandler) createProduct(w http.ResponseWriter, r *http.Request) {
@@ -130,8 +151,10 @@ func (h *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 // @Tags products
 // @Accept json
 // @Produce json
+// @Param page query int false "Page number (starts at 1)"
+// @Param limit query int false "Items per page (max 100)"
 // @Param product body models.Product false "Product payload (POST only)"
-// @Success 200 {array} models.Product
+// @Success 200 {object} map[string]interface{}
 // @Success 201 {object} models.Product
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string

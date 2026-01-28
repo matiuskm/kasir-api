@@ -14,7 +14,8 @@ func NewProductRepository(db *sql.DB) *ProductRepository {
 	return &ProductRepository{db: db}
 }
 
-func (r *ProductRepository) GetAllProducts() ([]models.Product, error) {
+func (r *ProductRepository) GetAllProducts(page, limit int) ([]models.Product, error) {
+	offset := (page - 1) * limit
 	rows, err := r.db.Query(`
 		SELECT
 			p.id,
@@ -27,7 +28,10 @@ func (r *ProductRepository) GetAllProducts() ([]models.Product, error) {
 			c.description
 		FROM products p
 		LEFT JOIN categories c ON p.category_id = c.id
-		ORDER BY p.id ASC`,
+		ORDER BY p.id ASC
+		LIMIT $1 OFFSET $2`,
+		limit,
+		offset,
 	)
 	if err != nil {
 		log.Println("Error executing query:", err)
@@ -136,4 +140,10 @@ func (r *ProductRepository) UpdateProduct(product *models.Product) error {
 func (r *ProductRepository) DeleteProduct(id int) error {
 	_, err := r.db.Exec("DELETE FROM products WHERE id = $1", id)
 	return err
+}
+
+func (r *ProductRepository) CountProducts() (int, error) {
+	var total int
+	err := r.db.QueryRow("SELECT COUNT(*) FROM products").Scan(&total)
+	return total, err
 }

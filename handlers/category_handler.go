@@ -17,8 +17,24 @@ func NewCategoryHandler(service *services.CategoryService) *CategoryHandler {
 	return &CategoryHandler{service: service}
 }
 
-func (h *CategoryHandler) getAllCategories(w http.ResponseWriter, _ *http.Request) {
-	categories, err := h.service.GetAllCategories()
+func (h *CategoryHandler) getAllCategories(w http.ResponseWriter, r *http.Request) {
+	page, limit, ok := parsePagination(r)
+	if !ok {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]string {
+			"error": "invalid pagination params",
+		})
+		return
+	}
+	total, err := h.service.CountCategories()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]string {
+			"error": "failed to count categories",
+		})
+		return
+	}
+	categories, err := h.service.GetAllCategories(page, limit)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(map[string]string {
@@ -26,7 +42,16 @@ func (h *CategoryHandler) getAllCategories(w http.ResponseWriter, _ *http.Reques
 		})
 		return
 	}
-	_ = json.NewEncoder(w).Encode(categories)
+	meta := PaginationMeta{
+		Total:    total,
+		Page:     page,
+		PageSize: limit,
+		HasMore:  page*limit < total,
+	}
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"data": categories,
+		"meta": meta,
+	})
 }
 
 func (h *CategoryHandler) createCategory(w http.ResponseWriter, r *http.Request) {
@@ -148,8 +173,10 @@ func (h *CategoryHandler) deleteCategoryByID(w http.ResponseWriter, r *http.Requ
 // @Tags categories
 // @Accept json
 // @Produce json
+// @Param page query int false "Page number (starts at 1)"
+// @Param limit query int false "Items per page (max 100)"
 // @Param category body models.Category false "Category payload (POST only)"
-// @Success 200 {array} models.Category
+// @Success 200 {object} map[string]interface{}
 // @Success 201 {object} models.Category
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string

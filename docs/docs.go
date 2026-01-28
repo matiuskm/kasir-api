@@ -28,15 +28,28 @@ const docTemplate = `{
     "/api/products": {
       "get": {
         "summary": "List products",
-        "description": "Retrieve all products",
+        "description": "Retrieve all products with pagination",
         "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "type": "integer",
+            "description": "Page number (starts at 1)"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "type": "integer",
+            "description": "Items per page (max 100)"
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
-            "schema": {
-              "type": "array",
-              "items": { "$ref": "#/definitions/models.Product" }
-            }
+            "schema": { "$ref": "#/definitions/models.ProductListResponse" }
           }
         }
       },
@@ -129,15 +142,28 @@ const docTemplate = `{
     "/api/categories": {
       "get": {
         "summary": "List categories",
-        "description": "Retrieve all categories",
+        "description": "Retrieve all categories with pagination",
         "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "type": "integer",
+            "description": "Page number (starts at 1)"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "type": "integer",
+            "description": "Items per page (max 100)"
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
-            "schema": {
-              "type": "array",
-              "items": { "$ref": "#/definitions/models.Category" }
-            }
+            "schema": { "$ref": "#/definitions/models.CategoryListResponse" }
           }
         }
       },
@@ -236,6 +262,35 @@ const docTemplate = `{
     }
   },
   "definitions": {
+    "models.PaginationMeta": {
+      "type": "object",
+      "properties": {
+        "total": { "type": "integer" },
+        "page": { "type": "integer" },
+        "page_size": { "type": "integer" },
+        "has_more": { "type": "boolean" }
+      }
+    },
+    "models.ProductListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/models.Product" }
+        },
+        "meta": { "$ref": "#/definitions/models.PaginationMeta" }
+      }
+    },
+    "models.CategoryListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/models.Category" }
+        },
+        "meta": { "$ref": "#/definitions/models.PaginationMeta" }
+      }
+    },
     "models.Product": {
       "type": "object",
       "properties": {
