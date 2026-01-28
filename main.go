@@ -1,9 +1,16 @@
 package main
 
+// @title Kasir API
+// @version 1.0.0
+// @description API documentation for Kasir.
+// @host kasir-api-production-8ed0.up.railway.app
+// @BasePath /
+
 import (
 	"encoding/json"
 	"fmt"
 	"kasir-api/database"
+	_ "kasir-api/docs"
 	"kasir-api/handlers"
 	"kasir-api/repositories"
 	"kasir-api/services"
@@ -12,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/spf13/viper"
+	httpSwagger "github.com/swaggo/http-swagger/v2" 
 )
 
 const (
@@ -58,6 +66,7 @@ func main() {
 	http.HandleFunc("/api/products/", productHandler.HandleProductByID)
 	http.HandleFunc("/api/categories", categoryHandler.HandleCategories)
 	http.HandleFunc("/api/categories/", categoryHandler.HandleCategoryByID)
+	http.Handle("/swagger/", httpSwagger.WrapHandler)
 
 	// localhost:8080/health
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {

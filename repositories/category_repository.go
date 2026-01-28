@@ -47,6 +47,41 @@ func (r *CategoryRepository) GetCategoryByID(id int) (*models.Category, error) {
 	return &c, nil
 }
 
+func (r *CategoryRepository) GetCategoryByIDWithProducts(id int) (*models.Category, error) {
+	category, err := r.GetCategoryByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.db.Query(`
+		SELECT
+			p.id,
+			p.name,
+			p.price,
+			p.stock,
+			p.category_id
+		FROM products p
+		WHERE p.category_id = $1
+		ORDER BY p.id ASC`,
+		id,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	products := make([]models.Product, 0)
+	for rows.Next() {
+		var p models.Product
+		if err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Stock, &p.CategoryID); err != nil {
+			return nil, err
+		}
+		products = append(products, p)
+	}
+	category.Products = products
+	return category, nil
+}
+
 func (r *CategoryRepository) UpdateCategory(category *models.Category) error {
 	_, err := r.db.Exec("UPDATE categories SET name = $1, description = $2 WHERE id = $3",
 		category.Name, category.Description, category.ID)

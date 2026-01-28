@@ -65,7 +65,13 @@ func (h *CategoryHandler) getCategoryByID(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	category, err := h.service.GetCategoryByID(id)
+	include := r.URL.Query().Get("include")
+	var category *models.Category
+	if include == "products" {
+		category, err = h.service.GetCategoryByIDWithProducts(id)
+	} else {
+		category, err = h.service.GetCategoryByID(id)
+	}
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		_ = json.NewEncoder(w).Encode(map[string]string {
@@ -136,6 +142,19 @@ func (h *CategoryHandler) deleteCategoryByID(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// HandleCategories godoc
+// @Summary List or create categories
+// @Description GET returns all categories. POST creates a new category.
+// @Tags categories
+// @Accept json
+// @Produce json
+// @Param category body models.Category false "Category payload (POST only)"
+// @Success 200 {array} models.Category
+// @Success 201 {object} models.Category
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/categories [get]
+// @Router /api/categories [post]
 func (h *CategoryHandler) HandleCategories(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set(contentTypeHeader, jsonContentType)
 
@@ -149,6 +168,21 @@ func (h *CategoryHandler) HandleCategories(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// HandleCategoryByID godoc
+// @Summary Get, update, or delete category by ID
+// @Description GET retrieves a category; use include=products to include products. PUT updates it, DELETE removes it.
+// @Tags categories
+// @Produce json
+// @Param id path int true "Category ID"
+// @Param include query string false "Optional includes" Enums(products)
+// @Param category body models.Category false "Category payload (PUT only)"
+// @Success 200 {object} models.Category
+// @Success 204
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /api/categories/{id} [get]
+// @Router /api/categories/{id} [put]
+// @Router /api/categories/{id} [delete]
 func (h *CategoryHandler) HandleCategoryByID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set(contentTypeHeader, jsonContentType)
 

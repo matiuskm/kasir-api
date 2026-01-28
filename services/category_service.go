@@ -25,6 +25,10 @@ func (s *CategoryService) GetCategoryByID(id int) (*models.Category, error) {
 	return s.repo.GetCategoryByID(id)
 }
 
+func (s *CategoryService) GetCategoryByIDWithProducts(id int) (*models.Category, error) {
+	return s.repo.GetCategoryByIDWithProducts(id)
+}
+
 func (s *CategoryService) UpdateCategory(category *models.Category) error {
 	return s.repo.UpdateCategory(category)
 }

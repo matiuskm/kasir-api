@@ -124,7 +124,19 @@ func (h *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// HandleProducts - GET /api/products & POST /api/products
+// HandleProducts godoc
+// @Summary List or create products
+// @Description GET returns all products. POST creates a new product.
+// @Tags products
+// @Accept json
+// @Produce json
+// @Param product body models.Product false "Product payload (POST only)"
+// @Success 200 {array} models.Product
+// @Success 201 {object} models.Product
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/products [get]
+// @Router /api/products [post]
 func (h *ProductHandler) HandleProducts(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
@@ -136,6 +148,20 @@ func (h *ProductHandler) HandleProducts(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
+// HandleProductByID godoc
+// @Summary Get, update, or delete product by ID
+// @Description GET retrieves a product, PUT updates it, DELETE removes it.
+// @Tags products
+// @Produce json
+// @Param id path int true "Product ID"
+// @Param product body models.Product false "Product payload (PUT only)"
+// @Success 200 {object} models.Product
+// @Success 204
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /api/products/{id} [get]
+// @Router /api/products/{id} [put]
+// @Router /api/products/{id} [delete]
 func (h *ProductHandler) HandleProductByID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set(contentTypeHeader, jsonContentType)
 	
