@@ -25,18 +25,19 @@ func NewProductHandler(service *services.ProductService) *ProductHandler {
 func (h *ProductHandler) getAllProducts(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set(contentTypeHeader, jsonContentType)
 	page, limit, ok := parsePagination(r)
+	name := r.URL.Query().Get("name")
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Invalid pagination params"})
 		return
 	}
-	total, err := h.service.CountProducts()
+	total, err := h.service.CountProducts(name)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Failed to count products"})
 		return
 	}
-	products, err := h.service.GetAllProducts(page, limit)
+	products, err := h.service.GetAllProducts(page, limit, name)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(map[string]string{"error": "Failed to retrieve products"})

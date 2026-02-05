@@ -14,9 +14,14 @@ func NewProductRepository(db *sql.DB) *ProductRepository {
 	return &ProductRepository{db: db}
 }
 
-func (r *ProductRepository) GetAllProducts(page, limit int) ([]models.Product, error) {
+func (r *ProductRepository) GetAllProducts(page, limit int, name string) ([]models.Product, error) {
 	offset := (page - 1) * limit
-	rows, err := r.db.Query(`
+
+	var args []interface{}
+	args = append(args, limit)
+	args = append(args, offset)
+
+	query := `
 		SELECT
 			p.id,
 			p.name,
@@ -27,12 +32,17 @@ func (r *ProductRepository) GetAllProducts(page, limit int) ([]models.Product, e
 			c.name,
 			c.description
 		FROM products p
-		LEFT JOIN categories c ON p.category_id = c.id
-		ORDER BY p.id ASC
-		LIMIT $1 OFFSET $2`,
-		limit,
-		offset,
+		LEFT JOIN categories c ON p.category_id = c.id`
+	if name != "" {
+		query += ` WHERE p.name ILIKE $3`
+		args = append(args, "%" + name + "%")
+	}
+	query += ` ORDER BY p.id ASC
+		LIMIT $1 OFFSET $2`
+	rows, err := r.db.Query(query,
+		args...
 	)
+
 	if err != nil {
 		log.Println("Error executing query:", err)
 		return nil, err
@@ -142,8 +152,14 @@ func (r *ProductRepository) DeleteProduct(id int) error {
 	return err
 }
 
-func (r *ProductRepository) CountProducts() (int, error) {
+func (r *ProductRepository) CountProducts(name string) (int, error) {
 	var total int
-	err := r.db.QueryRow("SELECT COUNT(*) FROM products").Scan(&total)
+	query := "SELECT COUNT(*) FROM products"
+	var args []interface{}
+	if name != "" {
+		query += " WHERE name ILIKE $1"
+		args = append(args, "%" + name + "%")
+	}
+	err := r.db.QueryRow(query, args...).Scan(&total)
 	return total, err
 }

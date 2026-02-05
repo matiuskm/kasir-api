@@ -19,7 +19,7 @@ import (
 	"strings"
 
 	"github.com/spf13/viper"
-	httpSwagger "github.com/swaggo/http-swagger/v2" 
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 const (
@@ -60,12 +60,16 @@ func main() {
 	categoryRepo := repositories.NewCategoryRepository(db)
 	categoryService := services.NewCategoryService(categoryRepo)
 	categoryHandler := handlers.NewCategoryHandler(categoryService)
+	transactionRepo := repositories.NewTransactionRepository(db)
+	transactionService := services.NewTransactionService(transactionRepo)
+	transactionHandler := handlers.NewTransactionHandler(transactionService)
 
 	// setup routes
 	http.HandleFunc("/api/products", productHandler.HandleProducts)
 	http.HandleFunc("/api/products/", productHandler.HandleProductByID)
 	http.HandleFunc("/api/categories", categoryHandler.HandleCategories)
 	http.HandleFunc("/api/categories/", categoryHandler.HandleCategoryByID)
+	http.HandleFunc("/api/checkout", transactionHandler.HandleCheckout)
 	http.Handle("/swagger/", httpSwagger.WrapHandler)
 
 	// localhost:8080/health
