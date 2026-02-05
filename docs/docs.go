@@ -260,6 +260,156 @@ const docTemplate = `{
         }
       }
     }
+    ,
+    "/api/checkout": {
+      "post": {
+        "summary": "Create transaction (checkout)",
+        "description": "Creates a transaction and returns the simplified details.",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "checkout",
+            "required": true,
+            "schema": { "$ref": "#/definitions/models.CheckoutRequest" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "schema": { "$ref": "#/definitions/models.TransactionResponse" }
+          },
+          "400": { "description": "Bad Request" }
+        }
+      }
+    },
+    "/api/transactions": {
+      "get": {
+        "summary": "List transactions",
+        "description": "Returns transactions with total products, total amount, and transaction date. Supports month or date range filter.",
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "type": "integer",
+            "description": "Page number (starts at 1)"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "type": "integer",
+            "description": "Items per page (max 100)"
+          },
+          {
+            "in": "query",
+            "name": "month",
+            "required": false,
+            "type": "string",
+            "description": "Filter by month (YYYY-MM)",
+            "example": "2026-01"
+          },
+          {
+            "in": "query",
+            "name": "start_date",
+            "required": false,
+            "type": "string",
+            "description": "Filter start date (YYYY-MM-DD)",
+            "example": "2026-01-01"
+          },
+          {
+            "in": "query",
+            "name": "end_date",
+            "required": false,
+            "type": "string",
+            "description": "Filter end date (YYYY-MM-DD)",
+            "example": "2026-01-31"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": { "$ref": "#/definitions/models.TransactionListResponse" }
+          },
+          "400": { "description": "Bad Request" },
+          "500": { "description": "Internal Server Error" }
+        }
+      }
+    },
+    "/api/transactions/{id}": {
+      "get": {
+        "summary": "Get transaction detail",
+        "description": "Returns transaction detail with simplified item fields.",
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": { "$ref": "#/definitions/models.TransactionResponse" }
+          },
+          "400": { "description": "Bad Request" },
+          "404": { "description": "Not Found" },
+          "500": { "description": "Internal Server Error" }
+        }
+      }
+    },
+    "/api/report/hari-ini": {
+      "get": {
+        "summary": "Today's sales report",
+        "description": "Returns total revenue, total transactions, and top-selling products for today (REPORT_TZ).",
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": { "$ref": "#/definitions/models.DailyReport" }
+          },
+          "500": { "description": "Internal Server Error" }
+        }
+      }
+    },
+    "/api/report": {
+      "get": {
+        "summary": "Report by date range",
+        "description": "Returns report for a date range (inclusive).",
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "start_date",
+            "required": true,
+            "type": "string",
+            "description": "Start date (YYYY-MM-DD)",
+            "example": "2026-01-01"
+          },
+          {
+            "in": "query",
+            "name": "end_date",
+            "required": true,
+            "type": "string",
+            "description": "End date (YYYY-MM-DD)",
+            "example": "2026-02-01"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": { "$ref": "#/definitions/models.DailyReport" }
+          },
+          "400": { "description": "Bad Request" },
+          "500": { "description": "Internal Server Error" }
+        }
+      }
+    }
   },
   "definitions": {
     "models.PaginationMeta": {
@@ -311,6 +461,89 @@ const docTemplate = `{
         "products": {
           "type": "array",
           "items": { "$ref": "#/definitions/models.Product" }
+        }
+      }
+    },
+    "models.CheckoutItem": {
+      "type": "object",
+      "properties": {
+        "product_id": { "type": "integer", "example": 4 },
+        "quantity": { "type": "integer", "example": 2 }
+      }
+    },
+    "models.CheckoutRequest": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/models.CheckoutItem" },
+          "example": [{ "product_id": 4, "quantity": 2 }]
+        }
+      }
+    },
+    "models.TransactionDetailResponse": {
+      "type": "object",
+      "properties": {
+        "product_name": { "type": "string", "example": "Indomie Goreng" },
+        "quantity": { "type": "integer", "example": 2 },
+        "subtotal": { "type": "integer", "example": 12000 }
+      }
+    },
+    "models.TransactionResponse": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "integer", "example": 3 },
+        "total_amount": { "type": "integer", "example": 16000 },
+        "transaction_date": { "type": "string", "example": "2026-02-05" },
+        "details": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/models.TransactionDetailResponse" },
+          "example": [
+            { "product_name": "Indomie Soto", "quantity": 2, "subtotal": 11000 },
+            { "product_name": "Coca Cola", "quantity": 1, "subtotal": 5000 }
+          ]
+        }
+      }
+    },
+    "models.TransactionListItem": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "integer", "example": 3 },
+        "total_products": { "type": "integer", "example": 3 },
+        "total_amount": { "type": "integer", "example": 16000 },
+        "transaction_date": { "type": "string", "example": "2026-02-05" }
+      }
+    },
+    "models.TransactionListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/models.TransactionListItem" },
+          "example": [
+            { "id": 3, "total_products": 3, "total_amount": 16000, "transaction_date": "2026-02-05" }
+          ]
+        },
+        "meta": { "$ref": "#/definitions/models.PaginationMeta" },
+        "total_revenue": { "type": "integer", "example": 45000 }
+      }
+    },
+    "models.BestProduct": {
+      "type": "object",
+      "properties": {
+        "nama": { "type": "string", "example": "Indomie Goreng" },
+        "qty_terjual": { "type": "integer", "example": 12 }
+      }
+    },
+    "models.DailyReport": {
+      "type": "object",
+      "properties": {
+        "total_revenue": { "type": "integer", "example": 45000 },
+        "total_transaksi": { "type": "integer", "example": 5 },
+        "produk_terlaris": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/models.BestProduct" },
+          "example": [{ "nama": "Indomie Goreng", "qty_terjual": 12 }]
         }
       }
     }

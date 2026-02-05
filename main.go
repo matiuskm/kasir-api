@@ -28,8 +28,9 @@ const (
 )
 
 type Config struct {
-	PORT 		string `mapstructure:"PORT"`
-	DB_CONN string `mapstructure:"DB_CONN"`
+	PORT      string `mapstructure:"PORT"`
+	DB_CONN   string `mapstructure:"DB_CONN"`
+	REPORT_TZ string `mapstructure:"REPORT_TZ"`
 }
 
 func main() {
@@ -42,8 +43,12 @@ func main() {
 	}
 
 	config := Config{
-		PORT: 		viper.GetString("PORT"),
-		DB_CONN: 	viper.GetString("DB_CONN"),
+		PORT:      viper.GetString("PORT"),
+		DB_CONN:   viper.GetString("DB_CONN"),
+		REPORT_TZ: viper.GetString("REPORT_TZ"),
+	}
+	if strings.TrimSpace(config.REPORT_TZ) == "" {
+		config.REPORT_TZ = "Asia/Jakarta"
 	}
 
 	// setup database
@@ -61,7 +66,7 @@ func main() {
 	categoryService := services.NewCategoryService(categoryRepo)
 	categoryHandler := handlers.NewCategoryHandler(categoryService)
 	transactionRepo := repositories.NewTransactionRepository(db)
-	transactionService := services.NewTransactionService(transactionRepo)
+	transactionService := services.NewTransactionService(transactionRepo, config.REPORT_TZ)
 	transactionHandler := handlers.NewTransactionHandler(transactionService)
 
 	// setup routes
@@ -70,19 +75,23 @@ func main() {
 	http.HandleFunc("/api/categories", categoryHandler.HandleCategories)
 	http.HandleFunc("/api/categories/", categoryHandler.HandleCategoryByID)
 	http.HandleFunc("/api/checkout", transactionHandler.HandleCheckout)
+	http.HandleFunc("/api/transactions", transactionHandler.HandleTransactions)
+	http.HandleFunc("/api/transactions/", transactionHandler.HandleTransactionByID)
+	http.HandleFunc("/api/report/hari-ini", transactionHandler.HandleReportHariIni)
+	http.HandleFunc("/api/report", transactionHandler.HandleReportRange)
 	http.Handle("/swagger/", httpSwagger.WrapHandler)
 
 	// localhost:8080/health
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set(contentTypeHeader, jsonContentType)
-		json.NewEncoder(w).Encode(map[string]string {
-			"status": "OK",
+		json.NewEncoder(w).Encode(map[string]string{
+			"status":  "OK",
 			"message": "Service is healthy",
 		})
 	})
 
 	fmt.Println("server running on port " + config.PORT)
-	err = http.ListenAndServe(":" + config.PORT, nil)
+	err = http.ListenAndServe(":"+config.PORT, nil)
 	if err != nil {
 		fmt.Println("gagal running server")
 	}
