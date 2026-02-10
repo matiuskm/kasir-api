@@ -12,6 +12,7 @@ import (
 	"kasir-api/database"
 	_ "kasir-api/docs"
 	"kasir-api/handlers"
+	"kasir-api/middlewares"
 	"kasir-api/repositories"
 	"kasir-api/services"
 	"net/http"
@@ -31,6 +32,7 @@ type Config struct {
 	PORT      string `mapstructure:"PORT"`
 	DB_CONN   string `mapstructure:"DB_CONN"`
 	REPORT_TZ string `mapstructure:"REPORT_TZ"`
+	API_KEY	 	string `mapstructure:"API_KEY"`
 }
 
 func main() {
@@ -46,6 +48,7 @@ func main() {
 		PORT:      viper.GetString("PORT"),
 		DB_CONN:   viper.GetString("DB_CONN"),
 		REPORT_TZ: viper.GetString("REPORT_TZ"),
+		API_KEY:   viper.GetString("API_KEY"),
 	}
 	if strings.TrimSpace(config.REPORT_TZ) == "" {
 		config.REPORT_TZ = "Asia/Jakarta"
@@ -57,6 +60,8 @@ func main() {
 		fmt.Println("failed to initialize database:", err)
 	}
 	defer db.Close()
+
+	apiKeyMiddleware := middlewares.APIKey(config.API_KEY)
 
 	// Setup HTTP Handlers
 	productRepo := repositories.NewProductRepository(db)
@@ -70,15 +75,15 @@ func main() {
 	transactionHandler := handlers.NewTransactionHandler(transactionService)
 
 	// setup routes
-	http.HandleFunc("/api/products", productHandler.HandleProducts)
-	http.HandleFunc("/api/products/", productHandler.HandleProductByID)
-	http.HandleFunc("/api/categories", categoryHandler.HandleCategories)
-	http.HandleFunc("/api/categories/", categoryHandler.HandleCategoryByID)
-	http.HandleFunc("/api/checkout", transactionHandler.HandleCheckout)
-	http.HandleFunc("/api/transactions", transactionHandler.HandleTransactions)
-	http.HandleFunc("/api/transactions/", transactionHandler.HandleTransactionByID)
-	http.HandleFunc("/api/report/hari-ini", transactionHandler.HandleReportHariIni)
-	http.HandleFunc("/api/report", transactionHandler.HandleReportRange)
+	http.HandleFunc("/api/products", middlewares.CORS(middlewares.Logger(apiKeyMiddleware(productHandler.HandleProducts))))
+	http.HandleFunc("/api/products/", middlewares.CORS(middlewares.Logger(apiKeyMiddleware(productHandler.HandleProductByID))))
+	http.HandleFunc("/api/categories", middlewares.CORS(middlewares.Logger(apiKeyMiddleware(categoryHandler.HandleCategories))))
+	http.HandleFunc("/api/categories/", middlewares.CORS(middlewares.Logger(apiKeyMiddleware(categoryHandler.HandleCategoryByID))))
+	http.HandleFunc("/api/checkout", middlewares.CORS(middlewares.Logger(apiKeyMiddleware(transactionHandler.HandleCheckout))))
+	http.HandleFunc("/api/transactions", middlewares.CORS(middlewares.Logger(apiKeyMiddleware(transactionHandler.HandleTransactions))))
+	http.HandleFunc("/api/transactions/", middlewares.CORS(middlewares.Logger(apiKeyMiddleware(transactionHandler.HandleTransactionByID))))
+	http.HandleFunc("/api/report/hari-ini", middlewares.CORS(middlewares.Logger(apiKeyMiddleware(transactionHandler.HandleReportHariIni))))
+	http.HandleFunc("/api/report", middlewares.CORS(middlewares.Logger(apiKeyMiddleware(transactionHandler.HandleReportRange))))
 	http.Handle("/swagger/", httpSwagger.WrapHandler)
 
 	// localhost:8080/health
